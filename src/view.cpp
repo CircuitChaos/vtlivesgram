@@ -1,4 +1,5 @@
 #include <X11/Xutil.h>
+#include <string>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
@@ -12,8 +13,8 @@ static const unsigned INITIAL_WIDTH	= 800;
 static const unsigned INITIAL_HEIGHT	= 600;
 static const unsigned STATUS_HEIGHT	= font::CHAR_HEIGHT;	// do not change without changing drawStatusChar()
 static const unsigned SIGNAL_DBFS_MAX	= 12000;
-static const double MAX_SPEED		= 50.00;
 static const double MIN_SPEED		= 0.01;
+static const double SPEED_SCALE_FACTOR	= 1.1;
 
 static const char WINDOW_NAME[] = "vtlivesgram";
 
@@ -294,12 +295,12 @@ bool CView::updateSpeed(bool up)
 {
 	if (up)
 	{
-		if (m_speed >= MAX_SPEED)
-			return false;
-
-		double newSpeed(m_speed * 1.1);
+		double newSpeed(m_speed * SPEED_SCALE_FACTOR);
 		if (newSpeed >= maxSpeed())
 			newSpeed = maxSpeed();
+
+		if (m_speed == newSpeed)
+			return false;
 
 		m_speed = newSpeed;
 	}
@@ -307,7 +308,7 @@ bool CView::updateSpeed(bool up)
 	{
 		if (m_speed <= MIN_SPEED)
 			return false;
-		m_speed /= 1.1;
+		m_speed /= SPEED_SCALE_FACTOR;
 	}
 
 	updateStatus();
@@ -320,9 +321,9 @@ void CView::updateStatus()
 	if (!m_res.statusImage)
 		return;
 
-	char ts[256] = "?";
-	char hz[16] = "?";
-	char dbfs[16] = "?";
+	std::string ts("?");
+	std::string hz("?");
+	std::string dbfs("?");
 
 	if (m_lastTs > 0)
 	{
@@ -330,29 +331,41 @@ void CView::updateStatus()
 		const time_t sec(m_lastTs >> 32);
 		// const uint32_t nsec((m_lastTs & ((1L << 32) - 1)) % 1000);
 		struct tm *tm(gmtime(&sec));
-		snprintf(ts, sizeof(ts), "%04d-%02d-%02d %02d:%02d:%02d",
+
+		char buf[256];
+		snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d:%02d",
 			tm->tm_year + 1900,
 			tm->tm_mon + 1,
 			tm->tm_mday,
 			tm->tm_hour,
 			tm->tm_min,
 			tm->tm_sec);
+
+		ts = buf;
 	}
 
 	if (m_mousex != -1 && m_mousex < (int) m_width)
 	{
 		if (m_lastRate != 0 && m_width > 1)
-			snprintf(hz, sizeof(hz), "%u", m_mousex * m_lastRate / ((m_width - 1) * 2));
+		{
+			char buf[256];
+			snprintf(buf, sizeof(buf), "%u", m_mousex * m_lastRate / ((m_width - 1) * 2));
+			hz = buf;
+		}
 
 		if (m_lastData.size() == m_width)
-			snprintf(dbfs, sizeof(dbfs), "-%u.%02u",
+		{
+			char buf[256];
+			snprintf(buf, sizeof(buf), "-%u.%02u",
 				m_lastData[m_mousex] / 100,
 				m_lastData[m_mousex] % 100);
+			dbfs = buf;
+		}
 	}
 
 	char buf[256];
 	snprintf(buf, sizeof(buf), "%s | Speed: %.2f | Mouse X: %s Hz, %s dBFS",
-		ts, m_speed, hz, dbfs);
+		ts.c_str(), m_speed, hz.c_str(), dbfs.c_str());
 
 	memset(m_res.statusImage->data, 0, m_width * STATUS_HEIGHT * 4);
 	for (int x(0); buf[x]; ++x)
@@ -478,6 +491,9 @@ double CView::maxSpeed() const
 		// cannot calculate
 		return 1.0;
 	}
+
+	// xxx
+	return 50000.0;
 
 	return (double) m_lastRate / (m_width * 2);
 }
