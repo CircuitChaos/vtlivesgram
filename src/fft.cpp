@@ -97,7 +97,6 @@ void CFft::init(unsigned width)
 	m_output = new fftw_complex[width];
 
 	createWindow();
-
 	m_plan = fftw_plan_dft_r2c_1d(width, m_input, m_output, FFTW_ESTIMATE | FFTW_DESTROY_INPUT);
 }
 
