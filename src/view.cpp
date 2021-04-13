@@ -492,8 +492,5 @@ double CView::maxSpeed() const
 		return 1.0;
 	}
 
-	// xxx
-	return 50000.0;
-
 	return (double) m_lastRate / (m_width * 2);
 }
