@@ -33,12 +33,12 @@ Then, you'll need some programs and libraries (Debian package names):
 * libx11-dev
 * libstdc++-dev
 
-The program also needs at least 24-bit color display, but nowadays it shouldn't be a problem.
+The program also needs at least 24-bit color display, but it shouldn't be a problem nowadays.
 
 # Compilation
 
-After you install everything, just issue *scons* in the project directory and program should be built. 
-Then run *sudo scons install* to install the program in */usr/local/bin* (or just copy *build/vtlivesgram* 
+After you install everything, just issue **scons** in the project directory and program should be built. 
+Then run **sudo scons install** to install the program in **/usr/local/bin** (or just copy **build/vtlivesgram** 
 executable to where you want it).
 
 # Usage
@@ -56,8 +56,8 @@ To plot data from .wav file, use:
 
 `vtwavex file.wav | vtcat -- -:1 - | vtlivesgram`
 
-To plot data from ALSA (sound card), use (it will take some time before data starts to appear, as *vtcard* 
-needs to calibrate first):
+To plot data from ALSA (sound card), use the following command. It will take some time before data starts 
+to appear, as *vtcard* needs to calibrate first:
 
 `vtcard -r 48000 | vtcat -- -:1 - | vtlivesgram`
 
@@ -78,15 +78,15 @@ need, so I didn't code it.
 
 ## User interface
 
-When *vtlivesgram* starts, a window is created and it's split into three parts:
+When **vtlivesgram** starts, a window is created and it's split into three parts:
 
 * Top part – shows the spectrum of the signal
 * Middle part – shows the waterfall
 * Bottom part – shows the status bar
 
 Waterfall speed can be changed by rotating the mouse wheel. If you resize the window (make it wider), 
-the speed might decrease, as there's a maximum speed for a given window size and sample rate – below 
-it, there wouldn't be enough samples to do the FFT.
+the speed might decrease, as there's a maximum speed for a given window size and sample rate – if it's 
+exceeded, then there wouldn't be enough samples to calculate the needed number of frequency bins.
 
 When you move the mouse pointer across the window, a status bar will show you the frequency at given 
 column and current signal magnitude in dBFS (current, not the one pointed-to by the mouse – horizontal 
@@ -95,31 +95,32 @@ input.
 
 To cycle through the available FFT windows (Hanning, rectangular, cosine, Hamming, Blackman, Nuttall), 
 press the left mouse button. To freeze and unfreeze the input (for example to make a screenshot later), 
-press the right mouse button. 
+press the right mouse button. Do not resize the frozen window, as the content will disappear.
 
 Program terminates either when there's end-of-file on the input (for example when reading from a file) 
 or when the window is closed.
 
 # Known issues
 
-The program is still in its alpha phase and there are already some issues that I know of.
+The program is still in its alpha stage and there are already some issues that I know of.
 
 * Speed limitations are not applied to the speed specified on the command line. If you specify a speed 
 that is too large, you'll either get a full-white spectrogram (with all frequency bins set to 0 dBFS), 
 or an error „Trying to read zero samples”.
 * When the program window is resized, the waterfall isn't rescaled – it's cleared and starts from the 
 beginning. Maybe it would be better to rescale it.
-* When doing FFT, the FFT width is adjusted to the number of output bins (program window width). Input 
+* When doing FFT, the FFT width is adjusted to the number of frequency bins (program window width). Input 
 samples (their count depends on the selected waterfall speed) are split into blocks, each containing a 
-number of samples for the given FFT width. If the division isn't complete, there'll be a number of 
-samples that aren't used. I don't know what should I do with them – I tried padding them with zeroes 
-to the needed FFT width and applying either a full on them, or a reduced one (reduced to the number of 
-samples), but it didn't yield good results. An advice from someone more experienced with DSP than I am 
-(I have very little experience – this program is my first practical approach to FFT) will be appreciated.
+number of samples for the given FFT width. If the division isn't complete, then there's a number of 
+samples which aren't used. I don't know what should I do with them – I tried padding them with zeroes 
+to the needed FFT width and applying either a full window on them, or a reduced one (reduced to the 
+number of samples), but it didn't yield good results. An advice from someone more experienced with DSP 
+than I am (I have very little experience – this program is my first practical approach to DSP) will be 
+appreciated.
 
 # Source code structure
 
-If you want to contribute to the code, here's the overall program structure.
+If you want to contribute to the code, here's the overall program structure which might make it easier.
 
 ## Entry point and main loop
 
@@ -138,9 +139,9 @@ It returns a bit mask with user interface events, which can contain one or more 
 If standard input is readable, then CSource::read() is called, which can yield three results:
 
 * End-of-file on input (method returns false) – program has to terminate
-* No result (empty output vector) – it means that more data is needed and nothing is done
+* No result (empty output vector) – it means that more input data is needed and nothing is done
 * One or more rows for the user interface – they are passed to the CView instance along with the input sample 
-rate and last known timestamp
+rate, last timestamp and current FFT window name
 
 ## Data source (CSource)
 
@@ -169,7 +170,7 @@ the following X events:
 * Expose (window has been exposed)
 * ConfigureNotify (window has been resized)
 * MapNotify (window has been mapped)
-* ClientMessage (window has been closed by the window manager
+* ClientMessage (window has been closed by the window manager)
 
 There are many private methods in the CView class, but I believe they're more or less self-explanatory.
 
@@ -184,12 +185,12 @@ raw samples.
 
 ### CFft
 
-This is the most important part of the program. It uses libfftw to perform FFT calculations. Its main 
-method is CFft::operator(). When called, first it checks the output width and calculates FFT width 
+This is the core part of the program. It uses *libfftw* to perform FFT calculations. Its main 
+method is CFft::operator(). When called, it checks the output width and calculates FFT width 
 from it (multiplies it by two), as the output contains only relevant number of frequency bins (half 
 of the FFT width). If the FFT width has been changed (or it's the first call), it calls CFft::init() 
 to reinitialize input and output buffers, recreate FFT window and FFTW plan. Then it creates a vector 
-storing magnitudes, splits input samples into a number of blocks, each containing a number of samples 
+to store magnitudes, splits input samples into a number of blocks, each containing a number of samples 
 equal to the FFT width, applies a FFT window on them and performs one or more FFT operations, calling 
 fftw_execute(). After each FFT round, it parses the FFT output and obtains magnitudes from the complex 
 samples returned by the FFT by calculating the square root of the sum of squares of the real and 
@@ -202,16 +203,17 @@ logarithms on them (20 * log10(magnitude / (width * iterations)). Then the resul
 value is clipped to the safe range (0.0 – -650.0), converted to the fixed-point return value and put 
 in the output buffer.
 
-It also has nextWindow() and getWindowName() methods for handling different FFT windows. All supported 
+CFft also has nextWindow() and getWindowName() methods for handling different FFT windows. All supported 
 window types are implemented in the private windowFunction() method.
 
 ### CSoxPal
 
-Converts magnitude in dbFS (from 0 to -120) to RGB values of colors used by spectrogram generated by *sox*. I like its palette, so I copied it.
+Converts magnitude in dbFS (from 0 to -120) to RGB values of colors used by spectrogram generated by 
+*sox*, as I like its palette.
 
 ### CFont
 
-Stores a DOS font which is used by CView to draw characters on a status bar.
+Stores a DOS font which is used by CView to draw characters on the status bar.
 
 ### SXResources
 
