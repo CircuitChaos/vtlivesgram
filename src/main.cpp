@@ -52,23 +52,27 @@ static int main2(int argc, char * const argv[])
 		if (e & CView::EVT_TERMINATE)
 			break;
 
-		if (e & CView::EVT_SIZE_CHANGED)
+		if (e & CView::EVT_WIDTH_CHANGED)
 			src.setWidth(view.getWidth());
 
 		if (e & CView::EVT_SPEED_CHANGED)
 			src.setSpeed(view.getSpeed());
+
+		if (e & CView::EVT_NEXT_FFT_WINDOW)
+			src.nextWindow();
 
 		if (FD_ISSET(sfd, &rfd))
 		{
 			std::vector<std::vector<uint16_t> > data;
 			uint32_t rate;
 			uint64_t ts;
+			std::string window;
 
-			if (!src.read(data, rate, ts))
+			if (!src.read(data, rate, ts, window))
 				break;
 
 			for (std::vector<std::vector<uint16_t> >::const_iterator i(data.begin()); i != data.end(); ++i)
-				view.update(*i, rate, ts);
+				view.update(*i, rate, ts, window);
 		}
 	}
 

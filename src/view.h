@@ -12,8 +12,9 @@ public:
 		EVT_NONE		= 0,
 
 		EVT_TERMINATE		= 1 << 0,
-		EVT_SIZE_CHANGED	= 1 << 1,
+		EVT_WIDTH_CHANGED	= 1 << 1,
 		EVT_SPEED_CHANGED	= 1 << 2,
+		EVT_NEXT_FFT_WINDOW	= 1 << 3,
 	};
 
 	CView(double initialSpeed);
@@ -25,7 +26,7 @@ public:
 	double getSpeed() const;
 
 	uint32_t evt();
-	void update(const std::vector<uint16_t> &data, uint32_t rate, uint64_t ts);
+	void update(const std::vector<uint16_t> &data, uint32_t rate, uint64_t ts, const std::string &fftWindowName);
 
 private:
 	int m_fd;
@@ -36,9 +37,11 @@ private:
 	uint32_t m_lastRate;
 	uint64_t m_lastTs;
 	std::vector<uint16_t> m_lastData;
+	std::string m_lastFftWindowName;
 	SXResources m_res;
 	unsigned m_signalHeight;
 	unsigned m_waterfallHeight;
+	bool m_freeze;
 
 	void redrawStatus();
 	void redrawAll();

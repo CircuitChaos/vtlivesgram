@@ -44,8 +44,10 @@ CView::CView(double initialSpeed):
 	m_mousex(-1),
 	m_lastRate(0),
 	m_lastTs(0),
+	m_lastFftWindowName("?"),
 	m_signalHeight(0),
-	m_waterfallHeight(0)
+	m_waterfallHeight(0),
+	m_freeze(false)
 {
 	m_res.dpy = XOpenDisplay(NULL);
 	xassert(m_res.dpy, "Cannot open display");
@@ -128,15 +130,30 @@ uint32_t CView::evt()
 			// ButtonPressMask
 			case ButtonPress:
 				xassert(e.xbutton.type == ButtonPress, "Invalid event type: %d", e.xbutton.type);
-				if (e.xbutton.button == Button4)
+				switch (e.xbutton.button)
 				{
-					if (updateSpeed(true))
-						rs |= EVT_SPEED_CHANGED;
-				}
-				else if (e.xbutton.button == Button5)
-				{
-					if (updateSpeed(false))
-						rs |= EVT_SPEED_CHANGED;
+					case Button1:
+						rs |= EVT_NEXT_FFT_WINDOW;
+						break;
+
+					case Button3:
+						m_freeze = !m_freeze;
+						updateStatus();
+						redrawStatus();
+						break;
+
+					case Button4:
+						if (updateSpeed(true))
+							rs |= EVT_SPEED_CHANGED;
+						break;
+
+					case Button5:
+						if (updateSpeed(false))
+							rs |= EVT_SPEED_CHANGED;
+						break;
+
+					default:
+						break;
 				}
 				break;
 
@@ -151,9 +168,11 @@ uint32_t CView::evt()
 				if ((int) m_width == e.xconfigure.width && (int) m_height == e.xconfigure.height)
 					break;
 
+				if ((int) m_width != e.xconfigure.width)
+					rs |= EVT_WIDTH_CHANGED;
+
 				m_width = e.xconfigure.width;
 				m_height = e.xconfigure.height;
-				rs |= EVT_SIZE_CHANGED;
 				resetImages();
 				if (m_speed > maxSpeed())
 				{
@@ -184,11 +203,15 @@ uint32_t CView::evt()
 	return rs;
 }
 
-void CView::update(const std::vector<uint16_t> &data, uint32_t rate, uint64_t ts)
+void CView::update(const std::vector<uint16_t> &data, uint32_t rate, uint64_t ts, const std::string &fftWindowName)
 {
+	if (m_freeze)
+		return;
+
 	m_lastRate = rate;
 	m_lastTs = ts;
 	m_lastData = data;
+	m_lastFftWindowName = fftWindowName;
 
 	drawSignal();
 	updateWaterfall();
@@ -322,9 +345,6 @@ void CView::updateStatus()
 		return;
 
 	std::string ts("?");
-	std::string hz("?");
-	std::string dbfs("?");
-
 	if (m_lastTs > 0)
 	{
 		// nsec not used, not needed
@@ -344,6 +364,8 @@ void CView::updateStatus()
 		ts = buf;
 	}
 
+	std::string hz("?");
+	std::string dbfs("?");
 	if (m_mousex != -1 && m_mousex < (int) m_width)
 	{
 		if (m_lastRate != 0 && m_width > 1)
@@ -363,9 +385,13 @@ void CView::updateStatus()
 		}
 	}
 
+	std::string freeze("");
+	if (m_freeze)
+		freeze = " | Frozen";
+
 	char buf[256];
-	snprintf(buf, sizeof(buf), "%s | Speed: %.2f | Mouse X: %s Hz, %s dBFS",
-		ts.c_str(), m_speed, hz.c_str(), dbfs.c_str());
+	snprintf(buf, sizeof(buf), "%s | Win: %s | Speed: %.2f | Mouse X: %s Hz, %s dBFS%s",
+		ts.c_str(), m_lastFftWindowName.c_str(), m_speed, hz.c_str(), dbfs.c_str(), freeze.c_str());
 
 	memset(m_res.statusImage->data, 0, m_width * STATUS_HEIGHT * 4);
 	for (int x(0); buf[x]; ++x)

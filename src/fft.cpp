@@ -1,8 +1,11 @@
 #include <cstring>
 #include <math.h>
+#include "throw.h"
 #include "fft.h"
 
-CFft::CFft(): m_width(0)
+CFft::CFft():
+	m_windowType(WIN_HANNING),
+	m_width(0)
 {
 }
 
@@ -93,9 +96,110 @@ void CFft::init(unsigned width)
 	m_input = new double[width];
 	m_output = new fftw_complex[width];
 
-	// currently, window is fixed to Hamming
-	for (unsigned i(0); i < width; ++i)
-		m_window[i] = 0.54 - 0.46 * cos(i / (width - 1) * 2 * M_PI);
+	createWindow();
 
 	m_plan = fftw_plan_dft_r2c_1d(width, m_input, m_output, FFTW_ESTIMATE | FFTW_DESTROY_INPUT);
+}
+
+void CFft::nextWindow()
+{
+	// not the most elegant solution...
+	int wnd(m_windowType);
+	++wnd;
+	if (wnd == WIN_MAX)
+		wnd = 0;
+	m_windowType = (EWindowType) wnd;
+	createWindow();
+}
+
+const char *CFft::getWindowName() const
+{
+	const char *rs(NULL);
+
+	switch (m_windowType)
+	{
+		case WIN_HANNING:
+			rs = "Hanning";
+			break;
+
+		case WIN_RECT:
+			rs = "rectangular";
+			break;
+
+		case WIN_COSINE:
+			rs = "cosine";
+			break;
+
+		case WIN_HAMMING:
+			rs = "Hamming";
+			break;
+
+		case WIN_BLACKMAN:
+			rs = "Blackman";
+			break;
+
+		case WIN_NUTTALL:
+			rs = "Nuttall";
+			break;
+
+		default:
+			break;
+	}
+
+	xassert(rs, "Unknown FFT window %d", m_windowType);
+	return rs;
+}
+
+void CFft::createWindow()
+{
+	for (unsigned i(0); i < m_width; ++i)
+		m_window[i] = windowFunction(i);
+}
+
+double CFft::windowFunction(unsigned i) const
+{
+	const double di(i);
+	switch (m_windowType)
+	{
+		case WIN_HANNING:
+			return sin(di / m_width * M_PI) * sin(di / m_width * M_PI);
+
+		case WIN_RECT:
+			return 1;
+
+		case WIN_COSINE:
+			return sin(di / m_width * M_PI);
+
+		case WIN_HAMMING:
+			return 0.54 - 0.46 * cos(di / m_width * 2 * M_PI);
+
+		case WIN_BLACKMAN:
+		{
+			const double a0((1 - 0.16) / 2);
+			const double a1(0.5);
+			const double a2(0.16 / 2);
+			return a0
+				- a1 * cos(di / m_width * 2 * M_PI)
+				+ a2 * cos(di / m_width * 4 * M_PI);
+		}
+
+		case WIN_NUTTALL:
+		{
+			const double a0(0.355768);
+			const double a1(0.487396);
+			const double a2(0.144232);
+			const double a3(0.012604);
+			return a0
+				- a1 * cos(di / m_width * 2 * M_PI)
+				+ a2 * cos(di / m_width * 4 * M_PI)
+				- a3 * cos(di / m_width * 6 * M_PI);
+		}
+
+		default:
+			xthrow("Unknown FFT window %d", m_windowType);
+			/* NOTREACHED */
+			break;
+	}
+
+	return 0;
 }

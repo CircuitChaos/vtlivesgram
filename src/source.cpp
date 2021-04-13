@@ -27,7 +27,12 @@ void CSource::setSpeed(double speed)
 	m_speed = speed;
 }
 
-bool CSource::read(std::vector<std::vector<uint16_t> > &data, uint32_t &rate, uint64_t &ts)
+void CSource::nextWindow()
+{
+	m_fft.nextWindow();
+}
+
+bool CSource::read(std::vector<std::vector<uint16_t> > &data, uint32_t &rate, uint64_t &ts, std::string &fftWindowName)
 {
 	data.clear();
 	rate = 0;
@@ -52,6 +57,7 @@ bool CSource::read(std::vector<std::vector<uint16_t> > &data, uint32_t &rate, ui
 	{
 		ts = m_vt.getLastTs();
 		rate = m_vt.getRate();
+		fftWindowName = m_fft.getWindowName();
 
 		std::vector<double> in;
 		in.resize(numSamples);
