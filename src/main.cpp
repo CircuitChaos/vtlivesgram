@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include <cstdio>
 #include <cstdlib>
+#include <cerrno>
 #include <sys/select.h>
 #include "source.h"
 #include "view.h"
@@ -41,19 +42,21 @@ static int main2(int argc, char * const argv[])
 		xassert(rs >= 0, "select(): %m");
 		xassert(rs > 0, "select(): returned zero");
 
-		if (FD_ISSET(xfd, &rfd))
-		{
-			const uint32_t e(view.evt());
+		// we don't check for readability of xfd, because when doing fast window
+		// updates (very fast speed), for some reason select() stops returning
+		// its readibility. we'll rely on sfd readibility instead. not the best
+		// solution, but I don't have any better one. there's XPending() function
+		// (in view.evt()) anyway, so it won't hang.
+		const uint32_t e(view.evt());
 
-			if (e & CView::EVT_TERMINATE)
-				break;
+		if (e & CView::EVT_TERMINATE)
+			break;
 
-			if (e & CView::EVT_SIZE_CHANGED)
-				src.setWidth(view.getWidth());
+		if (e & CView::EVT_SIZE_CHANGED)
+			src.setWidth(view.getWidth());
 
-			if (e & CView::EVT_SPEED_CHANGED)
-				src.setSpeed(view.getSpeed());
-		}
+		if (e & CView::EVT_SPEED_CHANGED)
+			src.setSpeed(view.getSpeed());
 
 		if (FD_ISSET(sfd, &rfd))
 		{
