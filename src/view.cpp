@@ -466,16 +466,17 @@ void CView::updateWaterfall()
 
 void CView::clearSignal()
 {
-	memset(m_res.mainImage->data, 0x10, m_width * m_signalHeight * 4);
+	memset(m_res.mainImage->data, 0x00, m_width * m_signalHeight * 4);
 }
 
 void CView::drawSignalLine(unsigned x1, unsigned y1, unsigned y2)
 {
+	// in reality, we want to draw vertical stripes
 	if (y1 == y2)
 	{
 		// special case: draw horizontal line
-		drawSignalPixel(x1, y1);
-		drawSignalPixel(x1 + 1, y1);
+		drawSignalVertStripe(x1, y1);
+		drawSignalVertStripe(x1 + 1, y1);
 		return;
 	}
 
@@ -494,16 +495,27 @@ void CView::drawSignalLine(unsigned x1, unsigned y1, unsigned y2)
 	for (unsigned y(ystart); y <= yend; ++y)
 	{
 		const unsigned x(xstart + (y - ystart) * slope);
-		drawSignalPixel(x, y);
+		drawSignalVertStripe(x, y);
 	}
 }
 
-void CView::drawSignalPixel(unsigned x, unsigned y)
+void CView::drawSignalVertStripe(unsigned x, unsigned ystart)
+{
+	uint8_t bgr[3] = { 0xff, 0xff, 0xff };
+	drawSignalPixel(x, ystart, bgr);
+
+	for (unsigned y(ystart + 1); y < (m_signalHeight - 1); ++y)
+	{
+		bgr[0] = (y * 0xc0 / (m_signalHeight - 1)) ^ 0xff;
+		bgr[1] = bgr[2] = (y * 0xff / (m_signalHeight - 1)) ^ 0xff;
+		drawSignalPixel(x, y, bgr);
+	}
+}
+
+void CView::drawSignalPixel(unsigned x, unsigned y, const uint8_t bgr[])
 {
 	const unsigned ofs(((y * m_width) + x) * 4);
-	m_res.mainImage->data[ofs] = 0xff;
-	m_res.mainImage->data[ofs + 1] = 0xff;
-	m_res.mainImage->data[ofs + 2] = 0xff;
+	memcpy(m_res.mainImage->data + ofs, bgr, 3);
 }
 
 double CView::maxSpeed() const

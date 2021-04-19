@@ -55,6 +55,7 @@ private:
 	void updateWaterfall();
 	// draws line from x1,y1 to x1+1,y2
 	void drawSignalLine(unsigned x1, unsigned y1, unsigned y2);
-	void drawSignalPixel(unsigned x, unsigned y);
+	void drawSignalVertStripe(unsigned x, unsigned ystart);
+	void drawSignalPixel(unsigned x, unsigned y, const uint8_t bgr[3]);
 	double maxSpeed() const;
 };
