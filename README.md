@@ -89,7 +89,7 @@ the speed might decrease, as there's a maximum speed for a given window size and
 exceeded, then there wouldn't be enough samples to calculate the needed number of frequency bins.
 
 When you move the mouse pointer across the window, a status bar will show you the frequency at given 
-column and current signal magnitude in dBFS (current, not the one pointed-to by the mouse – horizontal 
+column and current signal magnitude in dBFS (current, not the one pointed-to by the mouse – vertical 
 position of the mouse pointer is not used). Status bar also shows the current timestamp read from the 
 input.
 
