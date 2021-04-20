@@ -94,8 +94,9 @@ position of the mouse pointer is not used). Status bar also shows the current ti
 input.
 
 To cycle through the available FFT windows (Hanning, rectangular, cosine, Hamming, Blackman, Nuttall), 
-press the left mouse button. To freeze and unfreeze the input (for example to make a screenshot later), 
-press the right mouse button. Do not resize the frozen window, as the content will disappear.
+press the left mouse button. To freeze (hold) and unfreeze (unhold) the input (for example to make a 
+screenshot later), press the right mouse button. Do not resize the frozen window, as the content will 
+disappear.
 
 Program terminates either when there's end-of-file on the input (for example when reading from a file) 
 or when the window is closed.

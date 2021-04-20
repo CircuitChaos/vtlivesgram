@@ -387,10 +387,10 @@ void CView::updateStatus()
 
 	std::string freeze("");
 	if (m_freeze)
-		freeze = " | Frozen";
+		freeze = " | Hold";
 
 	char buf[256];
-	snprintf(buf, sizeof(buf), "%s | Win: %s | Speed: %.2f | Mouse X: %s Hz, %s dBFS%s",
+	snprintf(buf, sizeof(buf), "%s | Win: %s | Speed: %.2f | Mouse: %s Hz, %s dBFS%s",
 		ts.c_str(), m_lastFftWindowName.c_str(), m_speed, hz.c_str(), dbfs.c_str(), freeze.c_str());
 
 	memset(m_res.statusImage->data, 0, m_width * STATUS_HEIGHT * 4);
