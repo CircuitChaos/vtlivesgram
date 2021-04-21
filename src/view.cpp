@@ -508,6 +508,8 @@ void CView::drawSignalVertStripe(unsigned x, unsigned ystart)
 	{
 		bgr[0] = (y * 0xc0 / (m_signalHeight - 1)) ^ 0xff;
 		bgr[1] = bgr[2] = (y * 0xff / (m_signalHeight - 1)) ^ 0xff;
+		for (unsigned i(0); i < 3; ++i)
+			bgr[i] = (unsigned) bgr[i] * (m_signalHeight * 2 - y - 1) / (m_signalHeight * 2 - 1);
 		drawSignalPixel(x, y, bgr);
 	}
 }
