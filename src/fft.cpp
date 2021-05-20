@@ -4,7 +4,7 @@
 #include "fft.h"
 
 CFft::CFft():
-	m_windowType(WIN_HANNING),
+	m_windowType(WIN_NUTTALL),
 	m_width(0)
 {
 }
