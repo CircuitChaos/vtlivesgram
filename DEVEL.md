@@ -47,6 +47,7 @@ the following X events:
 
 * MotionNotify (mouse has been moved)
 * ButtonPress (mouse button has been pressed or mouse wheel has been turned)
+* KeyPress (key has been pressed)
 * Expose (window has been exposed)
 * ConfigureNotify (window has been resized)
 * MapNotify (window has been mapped)

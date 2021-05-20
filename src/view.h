@@ -43,11 +43,18 @@ private:
 	unsigned m_waterfallHeight;
 	bool m_freeze;
 
+	enum EDir
+	{
+		DIR_UP,
+		DIR_DN,
+		DIR_RESET,
+	};
+
 	void redrawStatus();
 	void redrawAll();
 	void resetImages();
 	void updateMouse(unsigned x, unsigned y);
-	bool updateSpeed(bool up);
+	bool updateSpeed(EDir dir);
 	void updateStatus();
 	void drawStatusChar(unsigned x, char ch);
 	void clearSignal();

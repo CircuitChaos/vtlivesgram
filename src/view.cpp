@@ -4,6 +4,7 @@
 #include <cstring>
 #include <ctime>
 #include <cstdio>
+#include <cmath>
 #include "view.h"
 #include "throw.h"
 #include "font.h"
@@ -80,6 +81,7 @@ CView::CView(double initialSpeed):
 	XSelectInput(m_res.dpy, m_res.win.get(),
 		PointerMotionMask |	// for updating frequency on status bar
 		ButtonPressMask |	// for wheel (button 4 and 5)
+		KeyPressMask |		// for keyboard events
 		ExposureMask |		// for redrawing image on window
 		StructureNotifyMask);	// for resizing
 	XMapWindow(m_res.dpy, m_res.win.get());
@@ -143,12 +145,12 @@ uint32_t CView::evt()
 						break;
 
 					case Button4:
-						if (updateSpeed(true))
+						if (updateSpeed(DIR_UP))
 							rs |= EVT_SPEED_CHANGED;
 						break;
 
 					case Button5:
-						if (updateSpeed(false))
+						if (updateSpeed(DIR_DN))
 							rs |= EVT_SPEED_CHANGED;
 						break;
 
@@ -156,6 +158,49 @@ uint32_t CView::evt()
 						break;
 				}
 				break;
+
+			// KeyPressMask
+			case KeyPress:
+			{
+				xassert(e.xkey.type == KeyPress, "Invalid event type: %d", e.xkey.type);
+				KeySym ks(0);
+				XLookupString((XKeyEvent *) &e, NULL, 0, &ks, NULL);
+				switch (ks)
+				{
+					case 'q':
+						rs |= EVT_TERMINATE;
+						break;
+
+					case '+':
+						if (updateSpeed(DIR_UP))
+							rs |= EVT_SPEED_CHANGED;
+						break;
+
+					case '-':
+						if (updateSpeed(DIR_DN))
+							rs |= EVT_SPEED_CHANGED;
+						break;
+
+					case 0xff08:	// bksp
+						if (updateSpeed(DIR_RESET))
+							rs |= EVT_SPEED_CHANGED;
+						break;
+
+					case 0x20:	// space
+						m_freeze = !m_freeze;
+						updateStatus();
+						redrawStatus();
+						break;
+
+					case 'w':
+						rs |= EVT_NEXT_FFT_WINDOW;
+						break;
+
+					default:
+						break;
+				}
+				break;
+			}
 
 			// ExposureMask
 			case Expose:
@@ -177,7 +222,7 @@ uint32_t CView::evt()
 				if (m_speed > maxSpeed())
 				{
 					// normalize speed
-					if (updateSpeed(true))
+					if (updateSpeed(DIR_UP))
 						rs |= EVT_SPEED_CHANGED;
 				}
 				redrawAll();
@@ -314,9 +359,9 @@ void CView::updateMouse(unsigned x, unsigned /* y */)
 	redrawStatus();
 }
 
-bool CView::updateSpeed(bool up)
+bool CView::updateSpeed(EDir dir)
 {
-	if (up)
+	if (dir == DIR_UP)
 	{
 		double newSpeed(m_speed * SPEED_SCALE_FACTOR);
 		if (newSpeed >= maxSpeed())
@@ -327,11 +372,18 @@ bool CView::updateSpeed(bool up)
 
 		m_speed = newSpeed;
 	}
-	else
+	else if (dir == DIR_DN)
 	{
 		if (m_speed <= MIN_SPEED)
 			return false;
 		m_speed /= SPEED_SCALE_FACTOR;
+	}
+	else
+	{
+		if (fabs(m_speed - 1.0) < 0.0001)
+			return false;
+
+		m_speed = 1.0;
 	}
 
 	updateStatus();

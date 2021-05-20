@@ -101,6 +101,15 @@ disappear.
 Program terminates either when there's end-of-file on the input (for example when reading from a file) 
 or when the window is closed.
 
+Program can be also handled with the keyboard. Keys:
+
+* **q**: quit
+* **+**: increase speed
+* **-**: decrease speed
+* **Backspace**: reset speed (set to 1.0)
+* **Space**: hold or unhold
+* **w**: cycle through FFT windows
+
 # Known issues
 
 The program is still in its alpha stage and there are already some issues that I know of.
