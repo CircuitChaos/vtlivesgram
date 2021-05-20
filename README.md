@@ -97,8 +97,8 @@ and shift to default (zoom is set to 1 and shift to 0). Amount of each shift inc
 of the window width. Note that the bigger the zoom, the smaller the maximum allowed speed, as more samples 
 are needed to do the calculations.
 
-* **FFT Window.** To cycle through the available FFT windows (Hanning, rectangular, cosine, Hamming, Blackman, 
-Nuttall), press the left mouse button (LMB) or **w** key.
+* **FFT Window.** To cycle through the available FFT window functions (Hanning, rectangular, cosine, 
+Hamming, Blackman and Nuttall), press the left mouse button (LMB) or **w** key.
 
 * **Hold.** To freeze (hold) and unfreeze (unhold) the input (for example to make a screenshot later), 
 press the right mouse button (RMB) or **space** key. Do not resize the frozen window, as its content will 
