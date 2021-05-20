@@ -12,9 +12,8 @@ public:
 		EVT_NONE		= 0,
 
 		EVT_TERMINATE		= 1 << 0,
-		EVT_WIDTH_CHANGED	= 1 << 1,
-		EVT_SPEED_CHANGED	= 1 << 2,
-		EVT_NEXT_FFT_WINDOW	= 1 << 3,
+		EVT_CONFIG_CHANGED	= 1 << 1,
+		EVT_NEXT_FFT_WINDOW	= 1 << 2,
 	};
 
 	CView(double initialSpeed);
@@ -33,6 +32,8 @@ private:
 	unsigned m_width;
 	unsigned m_height;
 	double m_speed;
+	unsigned m_zoom;
+	unsigned m_shift;
 	int m_mousex;
 	uint32_t m_lastRate;
 	uint64_t m_lastTs;
@@ -64,5 +65,13 @@ private:
 	void drawSignalLine(unsigned x1, unsigned y1, unsigned y2);
 	void drawSignalVertStripe(unsigned x, unsigned ystart);
 	void drawSignalPixel(unsigned x, unsigned y, const uint8_t bgr[3]);
-	double maxSpeed() const;
+	double getMaxSpeed() const;
+	void updateFreeze();
+
+	// updateZoom() with dir == UP can also update speed
+	// updateZoom() with dir == DOWN can also update shift
+	bool updateZoom(bool up);
+	void updateShift(bool up);
+	bool resetZoomAndShift();
+	unsigned getMaxShift();	// returns max shift for current zoom and window size
 };

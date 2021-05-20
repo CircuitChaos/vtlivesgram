@@ -52,11 +52,11 @@ static int main2(int argc, char * const argv[])
 		if (e & CView::EVT_TERMINATE)
 			break;
 
-		if (e & CView::EVT_WIDTH_CHANGED)
+		if (e & CView::EVT_CONFIG_CHANGED)
+		{
 			src.setWidth(view.getWidth());
-
-		if (e & CView::EVT_SPEED_CHANGED)
 			src.setSpeed(view.getSpeed());
+		}
 
 		if (e & CView::EVT_NEXT_FFT_WINDOW)
 			src.nextWindow();

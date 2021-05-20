@@ -107,6 +107,11 @@ Program can also be handled with the keyboard. Supported keys:
 * **+**: increase speed
 * **-**: decrease speed
 * **Backspace**: reset speed (set to 1.0)
+* **up**: increase zoom
+* **down**: decrease zoom
+* **right**: increase shift
+* **left**: decrease shift
+* **r**: reset zoom and shift
 * **Space**: hold or unhold
 * **w**: cycle through FFT windows
 

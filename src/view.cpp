@@ -16,6 +16,7 @@ static const unsigned STATUS_HEIGHT	= font::CHAR_HEIGHT;	// do not change withou
 static const unsigned SIGNAL_DBFS_MAX	= 12000;
 static const double MIN_SPEED		= 0.01;
 static const double SPEED_SCALE_FACTOR	= 1.1;
+static const unsigned SHIFT_STEP_DIVISOR	= 20;
 
 static const char WINDOW_NAME[] = "vtlivesgram";
 
@@ -42,6 +43,8 @@ CView::CView(double initialSpeed):
 	m_width(0),
 	m_height(0),
 	m_speed(initialSpeed),
+	m_zoom(1),
+	m_shift(0),
 	m_mousex(-1),
 	m_lastRate(0),
 	m_lastTs(0),
@@ -104,7 +107,7 @@ int CView::getFd() const
 
 unsigned CView::getWidth() const
 {
-	return m_width;
+	return m_width * m_zoom;
 }
 
 double CView::getSpeed() const
@@ -139,19 +142,15 @@ uint32_t CView::evt()
 						break;
 
 					case Button3:
-						m_freeze = !m_freeze;
-						updateStatus();
-						redrawStatus();
+						updateFreeze();
 						break;
 
 					case Button4:
-						if (updateSpeed(DIR_UP))
-							rs |= EVT_SPEED_CHANGED;
+						rs |= updateSpeed(DIR_UP) ? EVT_CONFIG_CHANGED : 0;
 						break;
 
 					case Button5:
-						if (updateSpeed(DIR_DN))
-							rs |= EVT_SPEED_CHANGED;
+						rs |= updateSpeed(DIR_DN) ? EVT_CONFIG_CHANGED : 0;
 						break;
 
 					default:
@@ -174,29 +173,44 @@ uint32_t CView::evt()
 					case '+':
 					case '=':
 					case 0xffab:	// num+
-						if (updateSpeed(DIR_UP))
-							rs |= EVT_SPEED_CHANGED;
+						rs |= updateSpeed(DIR_UP) ? EVT_CONFIG_CHANGED : 0;
 						break;
 
 					case '-':
 					case 0xffad:	// num-
-						if (updateSpeed(DIR_DN))
-							rs |= EVT_SPEED_CHANGED;
+						rs |= updateSpeed(DIR_DN) ? EVT_CONFIG_CHANGED : 0;
 						break;
 
 					case 0xff08:	// bksp
-						if (updateSpeed(DIR_RESET))
-							rs |= EVT_SPEED_CHANGED;
+						rs |= updateSpeed(DIR_RESET) ? EVT_CONFIG_CHANGED : 0;
 						break;
 
 					case 0x20:	// space
-						m_freeze = !m_freeze;
-						updateStatus();
-						redrawStatus();
+						updateFreeze();
 						break;
 
 					case 'w':
 						rs |= EVT_NEXT_FFT_WINDOW;
+						break;
+
+					case 0xff52:	// up
+						rs |= updateZoom(true) ? EVT_CONFIG_CHANGED : 0;
+						break;
+
+					case 0xff54:	// down
+						rs |= updateZoom(false) ? EVT_CONFIG_CHANGED : 0;
+						break;
+
+					case 0xff53:	// right
+						updateShift(true);
+						break;
+
+					case 0xff51:	// left
+						updateShift(false);
+						break;
+
+					case 'r':
+						rs |= resetZoomAndShift() ? EVT_CONFIG_CHANGED : 0;
 						break;
 
 					default:
@@ -217,17 +231,24 @@ uint32_t CView::evt()
 					break;
 
 				if ((int) m_width != e.xconfigure.width)
-					rs |= EVT_WIDTH_CHANGED;
+					rs |= EVT_CONFIG_CHANGED;
 
 				m_width = e.xconfigure.width;
 				m_height = e.xconfigure.height;
 				resetImages();
-				if (m_speed > maxSpeed())
+				if (m_speed > getMaxSpeed())
 				{
 					// normalize speed
 					if (updateSpeed(DIR_UP))
-						rs |= EVT_SPEED_CHANGED;
+						rs |= EVT_CONFIG_CHANGED;
 				}
+
+				if (m_shift > getMaxShift())
+				{
+					m_shift = getMaxShift();
+					rs |= EVT_CONFIG_CHANGED;
+				}
+
 				redrawAll();
 				break;
 
@@ -256,9 +277,21 @@ void CView::update(const std::vector<uint16_t> &data, uint32_t rate, uint64_t ts
 	if (m_freeze)
 		return;
 
+	if (data.size() != m_width * m_zoom)
+		return;
+
+	if (m_zoom == 1)
+		m_lastData = data;
+	else
+	{
+		xassert((m_shift + m_width) <= (m_width * m_zoom), "%u %u %u", m_shift, m_width, m_zoom);
+		m_lastData.clear();
+		m_lastData.reserve(m_width);
+		std::copy(data.begin() + m_shift, data.begin() + m_shift + m_width, std::back_inserter(m_lastData));
+	}
+
 	m_lastRate = rate;
 	m_lastTs = ts;
-	m_lastData = data;
 	m_lastFftWindowName = fftWindowName;
 
 	drawSignal();
@@ -367,10 +400,10 @@ bool CView::updateSpeed(EDir dir)
 	if (dir == DIR_UP)
 	{
 		double newSpeed(m_speed * SPEED_SCALE_FACTOR);
-		if (newSpeed >= maxSpeed())
-			newSpeed = maxSpeed();
+		if (newSpeed >= getMaxSpeed())
+			newSpeed = getMaxSpeed();
 
-		if (m_speed == newSpeed)
+		if (fabs(m_speed - newSpeed) < 0.0001)
 			return false;
 
 		m_speed = newSpeed;
@@ -383,10 +416,14 @@ bool CView::updateSpeed(EDir dir)
 	}
 	else
 	{
-		if (fabs(m_speed - 1.0) < 0.0001)
+		double newSpeed(1.0);
+		if (newSpeed > getMaxSpeed())
+			newSpeed = getMaxSpeed();
+
+		if (fabs(m_speed - newSpeed) < 0.0001)
 			return false;
 
-		m_speed = 1.0;
+		m_speed = newSpeed;
 	}
 
 	updateStatus();
@@ -426,7 +463,7 @@ void CView::updateStatus()
 		if (m_lastRate != 0 && m_width > 1)
 		{
 			char buf[256];
-			snprintf(buf, sizeof(buf), "%u", m_mousex * m_lastRate / ((m_width - 1) * 2));
+			snprintf(buf, sizeof(buf), "%u", (m_mousex + m_shift) * m_lastRate / ((m_width * m_zoom - 1) * 2));
 			hz = buf;
 		}
 
@@ -444,9 +481,15 @@ void CView::updateStatus()
 	if (m_freeze)
 		freeze = " | Hold";
 
+	// xxx show frequency range, not only shift
+
 	char buf[256];
-	snprintf(buf, sizeof(buf), "%s | Win: %s | Speed: %.2f | Mouse: %s Hz, %s dBFS%s",
-		ts.c_str(), m_lastFftWindowName.c_str(), m_speed, hz.c_str(), dbfs.c_str(), freeze.c_str());
+	snprintf(buf, sizeof(buf), "%s | W: %s | Spd: %.2f Z: %ux Shft: %u (%u - %u Hz) | M: %s Hz, %s dBFS%s",
+		ts.c_str(), m_lastFftWindowName.c_str(), m_speed,
+		m_zoom, m_shift,
+		m_shift * m_lastRate / ((m_width * m_zoom - 1) * 2),
+		(m_shift + m_width - 1) * m_lastRate / ((m_width * m_zoom - 1) * 2),
+		hz.c_str(), dbfs.c_str(), freeze.c_str());
 
 	memset(m_res.statusImage->data, 0, m_width * STATUS_HEIGHT * 4);
 	for (int x(0); buf[x]; ++x)
@@ -575,7 +618,7 @@ void CView::drawSignalPixel(unsigned x, unsigned y, const uint8_t bgr[])
 	memcpy(m_res.mainImage->data + ofs, bgr, 3);
 }
 
-double CView::maxSpeed() const
+double CView::getMaxSpeed() const
 {
 	// number of samples: sample rate / speed
 	// fft width: m_width * 2
@@ -587,5 +630,98 @@ double CView::maxSpeed() const
 		return 1.0;
 	}
 
-	return (double) m_lastRate / (m_width * 2);
+	return (double) (m_lastRate / (m_width * 2)) / m_zoom;
+}
+
+void CView::updateFreeze()
+{
+	m_freeze = !m_freeze;
+	updateStatus();
+	redrawStatus();
+}
+
+bool CView::updateZoom(bool up)
+{
+	if (up)
+	{
+		++m_zoom;
+		if (m_speed > getMaxSpeed())
+			if (updateSpeed(DIR_UP))
+			{
+				// no need to call updateStatus() and redrawStatus() now
+				// because updateSpeed() did it for us
+				return true;
+			}
+	}
+	else
+	{
+		if (m_zoom == 1)
+			return false;
+
+		--m_zoom;
+		if (m_shift > getMaxShift())
+			m_shift = getMaxShift();
+	}
+
+	updateStatus();
+	redrawStatus();
+
+	return true;
+}
+
+void CView::updateShift(bool up)
+{
+	const unsigned maxShift(getMaxShift());
+	unsigned step(m_width / SHIFT_STEP_DIVISOR);
+	if (step == 0)
+		step = 1;
+
+	if (!up)
+	{
+		if (m_shift == 0)
+			return;
+
+		if (m_shift > step)
+			m_shift -= step;
+		else
+			m_shift = 0;
+	}
+	else
+	{
+		if (m_shift >= maxShift)
+			return;
+
+		if ((m_shift + step) >= maxShift)
+			m_shift = maxShift;
+		else
+			m_shift += step;
+	}
+
+	updateStatus();
+	redrawStatus();
+}
+
+bool CView::resetZoomAndShift()
+{
+	if (m_zoom == 1 && m_shift == 0)
+		return false;
+
+	const bool rs(m_zoom != 1);
+
+	m_zoom = 1;
+	m_shift = 0;
+
+	updateStatus();
+	redrawStatus();
+
+	return rs;
+}
+
+unsigned CView::getMaxShift()
+{
+	const unsigned range(m_width * m_zoom);
+	if (range == 0)
+		return 0;
+
+	return range - m_width - 1;
 }
