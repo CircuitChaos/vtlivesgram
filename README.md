@@ -61,11 +61,6 @@ to appear, as *vtcard* needs to calibrate first:
 
 `vtcard -r 48000 | vtcat -- -:1 - | vtlivesgram`
 
-You can provide default speed as the first argument of *vtlivesgram*, for example to plot 5 rows per 
-second, use:
-
-`… | vtlivesgram 5.0`
-
 There are some limitations on the input data format though:
 
 * Only single-channel data is supported
@@ -119,9 +114,6 @@ Program can also be handled with the keyboard. Supported keys:
 
 The program is still in its alpha stage and there are already some issues that I know of.
 
-* Speed limitations are not applied to the speed specified on the command line. If you specify a speed 
-that is too large, you'll either get a full-white spectrogram (with all frequency bins set to 0 dBFS), 
-or an error „Trying to read zero samples”.
 * When the program window is resized, the waterfall isn't rescaled – it's cleared and starts from the 
 beginning. Maybe it would be better to rescale it.
 * When doing FFT, the FFT width is adjusted to the number of frequency bins (program window width). Input 

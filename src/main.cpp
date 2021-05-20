@@ -7,21 +7,15 @@
 #include "view.h"
 #include "throw.h"
 
-static int main2(int argc, char * const argv[])
+static int main2(int argc, char * const /* argv */ [])
 {
-	double initialSpeed(1.0);
-
-	if (argc > 2)
+	if (argc >= 2)
 	{
-		printf("Syntax: vtcat ... | vtlivesgram [<speed>]\n");
-		printf("Initial speed is in pixels per second\n");
+		printf("Syntax: vtcat ... | vtlivesgram\n");
 		return EXIT_SUCCESS;
 	}
 
-	if (argc > 1)
-		initialSpeed = atof(argv[1]);
-
-	CView view(initialSpeed);
+	CView view;
 	CSource src(view.getWidth(), view.getSpeed());
 
 	const int xfd(view.getFd());

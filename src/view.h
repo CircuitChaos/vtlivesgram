@@ -16,7 +16,7 @@ public:
 		EVT_NEXT_FFT_WINDOW	= 1 << 2,
 	};
 
-	CView(double initialSpeed);
+	CView();
 	~CView();
 
 	int getFd() const;

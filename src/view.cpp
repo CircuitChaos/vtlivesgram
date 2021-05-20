@@ -38,11 +38,11 @@ static int ioErrorHandler(Display *dpy)
 }
 #endif
 
-CView::CView(double initialSpeed):
+CView::CView():
 	m_fd(-1),
 	m_width(0),
 	m_height(0),
-	m_speed(initialSpeed),
+	m_speed(1.0),
 	m_zoom(1),
 	m_shift(0),
 	m_mousex(-1),
