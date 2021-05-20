@@ -12,8 +12,7 @@ If X server connection is readable, then CView::evt() is called to read and proc
 It returns a bit mask with user interface events, which can contain one or more of the following flags:
 
 * CView::EVT_TERMINATE – window has been closed, program has to terminate
-* CView::EVT_WIDTH_CHANGED – window width been changed, need to pass new width to the CSource instance
-* CView::EVT_SPEED_CHANGED – waterfall speed has been changed, need to pass new speed to the CSource instance
+* CView::EVT_CONFIG_CHANGED – window width or speed been changed, need to pass new params to the CSource instance
 * CView::EVT_NEXT_FFT_WINDOW – next FFT window has been requested, need to pass it to the CSource instance
 
 If standard input is readable, then CSource::read() is called, which can yield three results:
