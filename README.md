@@ -101,7 +101,7 @@ disappear.
 Program terminates either when there's end-of-file on the input (for example when reading from a file) 
 or when the window is closed.
 
-Program can be also handled with the keyboard. Keys:
+Program can also be handled with the keyboard. Supported keys:
 
 * **q**: quit
 * **+**: increase speed

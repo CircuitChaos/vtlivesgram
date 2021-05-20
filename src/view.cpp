@@ -172,11 +172,14 @@ uint32_t CView::evt()
 						break;
 
 					case '+':
+					case '=':
+					case 0xffab:	// num+
 						if (updateSpeed(DIR_UP))
 							rs |= EVT_SPEED_CHANGED;
 						break;
 
 					case '-':
+					case 0xffad:	// num-
 						if (updateSpeed(DIR_DN))
 							rs |= EVT_SPEED_CHANGED;
 						break;
