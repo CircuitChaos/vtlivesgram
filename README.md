@@ -94,7 +94,8 @@ of frequency bins.
 Zoom and shift is controlled by arrow keys. **Up** increases the zoom, **down** decreases it, **left** 
 decreases the shift (shifts the waterfall left) and **right** increases it. Pressing **r** resets zoom 
 and shift to default (zoom is set to 1 and shift to 0). Amount of each shift increase and decrease is 5% 
-of the window width.
+of the window width. Note that the bigger the zoom, the smaller the maximum allowed speed, as more samples 
+are needed to do the calculations.
 
 * **FFT Window.** To cycle through the available FFT windows (Hanning, rectangular, cosine, Hamming, Blackman, 
 Nuttall), press the left mouse button (LMB) or **w** key.
@@ -108,8 +109,8 @@ column and current signal magnitude in dBFS (current, not the one pointed-to by 
 position of the mouse pointer is not used). Status bar also shows the current timestamp read from the 
 input.
 
-Program terminates either when there's end-of-file on the input (for example when reading from a file) 
-or when the window is closed.
+Program terminates either when there's end-of-file on the input (for example when reading from a file), 
+when the window is closed or when **q** key is pressed.
 
 To summarize the controls:
 
@@ -129,13 +130,13 @@ To summarize the controls:
 
 The program is still in its alpha stage and there are already some issues that I know of.
 
-* When the program window is resized, the waterfall isn't rescaled – it's cleared and starts from the 
+* When the program window is resized, waterfall isn't rescaled – it's cleared and starts from the 
 beginning. Maybe it would be better to rescale it.
 
-* When doing FFT, the FFT width is adjusted to the number of frequency bins (program window width). Input 
-samples (their count depends on the selected waterfall speed) are split into blocks, each containing a 
-number of samples for the given FFT width. If the division isn't complete, then there's a number of 
-samples which aren't used. I don't know what should I do with them – I tried padding them with zeroes 
+* When doing FFT, the FFT width is adjusted to the number of frequency bins (program window width multiplied 
+by the zoom setting). Input samples (their count depends on the selected waterfall speed) are split to blocks, 
+each containing a number of samples for the given FFT width. If the division isn't complete, then there's a 
+number of samples which aren't used. I don't know what should I do with them – I tried padding them with zeroes 
 to the needed FFT width and applying either a full window on them, or a reduced one (reduced to the 
 number of samples), but it didn't yield good results. An advice from someone more experienced with DSP 
 than I am (I have very little experience – this program is my first practical approach to DSP) will be 
