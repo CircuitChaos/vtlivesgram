@@ -88,14 +88,17 @@ wheel or pressing **+** or **-** keys. Pressing **backspace** will reset the spe
 which is 1.0 (but can be lower for large zoom values). If you resize the window (make it wider) or increase 
 zoom (read below), the speed might decrease, as there's a maximum speed for given window width, zoom setting 
 and sample rate. This limit results from the minimum number of samples needed to calculate the needed number 
-of frequency bins.
+of frequency bins, and the formula is:
+
+maxSpeed = sampleRate ÷ (windowWidth × 2 × zoom)
 
 * **Zoom and shift.** Waterfall can be zoomed and shifted to focus only on certain portion of the spectrum. 
 Zoom and shift is controlled by arrow keys. **Up** increases the zoom, **down** decreases it, **left** 
 decreases the shift (shifts the waterfall left) and **right** increases it. Pressing **r** resets zoom 
-and shift to default (zoom is set to 1 and shift to 0). Amount of each shift increase and decrease is 5% 
-of the window width. Note that the bigger the zoom, the smaller the maximum allowed speed, as more samples 
-are needed to do the calculations.
+and shift to default (zoom is set to 1 and shift to 0). Amount of each shift increase and decrease (shift 
+step) is at most 5% of the window width multiplied by the zoom, but it can be smaller, as maximum shift is 
+also limited to the half of the window width. Note that the bigger the zoom, the smaller the maximum allowed 
+speed, as more samples are needed to do the calculations.
 
 * **FFT Window.** To cycle through the available FFT window functions (Hanning, rectangular, cosine, 
 Hamming, Blackman and Nuttall), press the left mouse button (LMB) or **w** key.

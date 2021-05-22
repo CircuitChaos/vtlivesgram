@@ -481,13 +481,10 @@ void CView::updateStatus()
 	if (m_freeze)
 		freeze = " | Hold";
 
-	// xxx show frequency range, not only shift
-
 	char buf[256];
-	snprintf(buf, sizeof(buf), "%s | W: %s | Spd: %.2f Z: %ux Shft: %u (%u - %u Hz) | M: %s Hz, %s dBFS%s",
+	snprintf(buf, sizeof(buf), "%s | W: %s | Spd: %.2f Z: %ux (%u - %u Hz) | M: %s Hz, %s dBFS%s",
 		ts.c_str(), m_lastFftWindowName.c_str(), m_speed,
-		m_zoom, m_shift,
-		m_shift * m_lastRate / ((m_width * m_zoom - 1) * 2),
+		m_zoom, m_shift * m_lastRate / ((m_width * m_zoom - 1) * 2),
 		(m_shift + m_width - 1) * m_lastRate / ((m_width * m_zoom - 1) * 2),
 		hz.c_str(), dbfs.c_str(), freeze.c_str());
 
@@ -630,7 +627,7 @@ double CView::getMaxSpeed() const
 		return 1.0;
 	}
 
-	return (double) (m_lastRate / (m_width * 2)) / m_zoom;
+	return (double) m_lastRate / (m_width * 2 * m_zoom);
 }
 
 void CView::updateFreeze()
@@ -672,9 +669,11 @@ bool CView::updateZoom(bool up)
 void CView::updateShift(bool up)
 {
 	const unsigned maxShift(getMaxShift());
-	unsigned step(m_width / SHIFT_STEP_DIVISOR);
+	unsigned step(m_width * m_zoom / SHIFT_STEP_DIVISOR);
 	if (step == 0)
 		step = 1;
+	else if (step > m_width / 2)
+		step = m_width / 2;
 
 	if (!up)
 	{
@@ -720,7 +719,7 @@ bool CView::resetZoomAndShift()
 unsigned CView::getMaxShift()
 {
 	const unsigned range(m_width * m_zoom);
-	if (range == 0)
+	if (range == 0 || m_zoom == 1)
 		return 0;
 
 	return range - m_width - 1;
