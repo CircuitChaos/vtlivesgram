@@ -88,9 +88,7 @@ wheel or pressing **+** or **-** keys. Pressing **backspace** will reset the spe
 which is 1.0 (but can be lower for large zoom values). If you resize the window (make it wider) or increase 
 zoom (read below), the speed might decrease, as there's a maximum speed for given window width, zoom setting 
 and sample rate. This limit results from the minimum number of samples needed to calculate the needed number 
-of frequency bins, and the formula is:
-
-maxSpeed = sampleRate ÷ (windowWidth × 2 × zoom)
+of frequency bins, and the formula is: maxSpeed = sampleRate ÷ (windowWidth × 2 × zoom).
 
 * **Zoom and shift.** Waterfall can be zoomed and shifted to focus only on certain portion of the spectrum. 
 Zoom and shift is controlled by arrow keys. **Up** increases the zoom, **down** decreases it, **left** 
