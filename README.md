@@ -66,7 +66,7 @@ in this mode would be:
 
 `sox file.wav -t raw -e signed -b 16 -c 1 - | vtlivesgram -r 48000 -w`
 
-To plot it faster, append `-s <speed>`.
+To plot it faster, append `-s <speed>`. You can also specify initial zoom and shift with *-z* and *-t*.
 
 To plot data sampled by the sound card (with ALSA), use the following command:
 

@@ -33,7 +33,7 @@ static int main2(int argc, char *const argv[])
 		return EXIT_SUCCESS;
 	}
 
-	View view(cli.getInitialSpeed());
+	View view(cli.getInitialSpeed(), cli.getInitialZoom(), cli.getInitialShift());
 	Source src(view.getWidth(), view.getSpeed(), cli.getSampleRate());
 
 	const int xfd(view.getFd());

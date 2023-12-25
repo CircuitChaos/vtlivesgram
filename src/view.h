@@ -14,7 +14,7 @@ public:
 		EVT_NEXT_FFT_WINDOW = 1 << 2,
 	};
 
-	View(double initialSpeed);
+	View(double initialSpeed, unsigned initialZoom, unsigned initialShift);
 	~View();
 
 	int getFd() const;
@@ -30,8 +30,8 @@ private:
 	unsigned m_width{0};
 	unsigned m_height{0};
 	double m_speed;
-	unsigned m_zoom{1};
-	unsigned m_shift{0};
+	unsigned m_zoom;
+	unsigned m_shift;
 	int m_mousex{-1};
 	uint32_t m_lastRate{0};
 	uint64_t m_lastTs{0};

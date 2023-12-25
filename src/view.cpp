@@ -38,8 +38,10 @@ static int ioErrorHandler(Display *dpy)
 }
 #endif
 
-View::View(double initialSpeed)
-    : m_speed(initialSpeed)
+View::View(double initialSpeed, unsigned initialZoom, unsigned initialShift)
+    : m_speed(initialSpeed),
+      m_zoom(initialZoom),
+      m_shift(initialShift)
 {
 	m_res.dpy = XOpenDisplay(NULL);
 	xassert(m_res.dpy, "Cannot open display");

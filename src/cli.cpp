@@ -7,7 +7,7 @@
 Cli::Cli(int argc, char *const argv[])
 {
 	int opt;
-	while((opt = getopt(argc, argv, ":hr:s:w")) != -1 && !m_shouldExit) {
+	while((opt = getopt(argc, argv, ":hr:s:t:wz:")) != -1 && !m_shouldExit) {
 		switch(opt) {
 			case '?':
 				xthrow("Option -%c not recognized", optopt);
@@ -28,8 +28,16 @@ Cli::Cli(int argc, char *const argv[])
 				m_initialSpeed = atof(optarg);
 				break;
 
+			case 't':
+				m_initialShift = atoi(optarg);
+				break;
+
 			case 'w':
 				m_waitOnEof = true;
+				break;
+
+			case 'z':
+				m_initialZoom = atoi(optarg);
 				break;
 
 			default:
@@ -51,7 +59,9 @@ void Cli::help()
 	    "  -h: show help\n"
 	    "  -r <rate>: specify sample rate\n"
 	    "  -s <speed>: specify initial speed\n"
+	    "  -t <shift>: specify initial shift\n"
 	    "  -w: wait on EOF\n"
+	    "  -z <zoom>: specify initial zoom\n"
 	    "\n"
 	    "If sample rate is specified, then input type is changed from vt \n"
 	    "to raw, mono, s16_le.";
