@@ -7,13 +7,13 @@
 Cli::Cli(int argc, char *const argv[])
 {
 	int opt;
-	while((opt = getopt(argc, argv, ":hr:w")) != -1 && !m_shouldExit) {
+	while((opt = getopt(argc, argv, ":hr:s:w")) != -1 && !m_shouldExit) {
 		switch(opt) {
 			case '?':
-				xthrow("Option -%c not recognized", opt);
+				xthrow("Option -%c not recognized", optopt);
 
 			case ':':
-				xthrow("Option -%c requires argument", opt);
+				xthrow("Option -%c requires argument", optopt);
 
 			case 'h':
 				help();
@@ -22,6 +22,10 @@ Cli::Cli(int argc, char *const argv[])
 
 			case 'r':
 				m_sampleRate = atoi(optarg);
+				break;
+
+			case 's':
+				m_initialSpeed = atof(optarg);
 				break;
 
 			case 'w':
@@ -46,6 +50,7 @@ void Cli::help()
 	    "Options:\n"
 	    "  -h: show help\n"
 	    "  -r <rate>: specify sample rate\n"
+	    "  -s <speed>: specify initial speed\n"
 	    "  -w: wait on EOF\n"
 	    "\n"
 	    "If sample rate is specified, then input type is changed from vt \n"

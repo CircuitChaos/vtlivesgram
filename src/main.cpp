@@ -8,6 +8,24 @@
 #include "throw.h"
 #include "cli.h"
 
+static bool processEvents(uint32_t events, Source &src, View &view)
+{
+	if(events & View::EVT_TERMINATE) {
+		return false;
+	}
+
+	if(events & View::EVT_CONFIG_CHANGED) {
+		src.setWidth(view.getWidth());
+		src.setSpeed(view.getSpeed());
+	}
+
+	if(events & View::EVT_NEXT_FFT_WINDOW) {
+		src.nextWindow();
+	}
+
+	return true;
+}
+
 static int main2(int argc, char *const argv[])
 {
 	Cli cli(argc, argv);
@@ -15,7 +33,7 @@ static int main2(int argc, char *const argv[])
 		return EXIT_SUCCESS;
 	}
 
-	View view;
+	View view(cli.getInitialSpeed());
 	Source src(view.getWidth(), view.getSpeed(), cli.getSampleRate());
 
 	const int xfd(view.getFd());
@@ -45,19 +63,8 @@ static int main2(int argc, char *const argv[])
 		// its readibility. we'll rely on sfd readibility instead. not the best
 		// solution, but I don't have any better one. there's XPending() function
 		// (in view.evt()) anyway, so it won't hang.
-		const uint32_t e(view.evt());
-
-		if(e & View::EVT_TERMINATE) {
+		if(!processEvents(view.evt(), src, view)) {
 			break;
-		}
-
-		if(e & View::EVT_CONFIG_CHANGED) {
-			src.setWidth(view.getWidth());
-			src.setSpeed(view.getSpeed());
-		}
-
-		if(e & View::EVT_NEXT_FFT_WINDOW) {
-			src.nextWindow();
 		}
 
 		if(!inputEof && FD_ISSET(sfd, &rfd)) {
@@ -76,8 +83,16 @@ static int main2(int argc, char *const argv[])
 				}
 			}
 
+			bool done(false);
 			for(std::vector<std::vector<uint16_t>>::const_iterator i(data.begin()); i != data.end(); ++i) {
-				view.update(*i, rate, ts, window);
+				if(!processEvents(view.update(*i, rate, ts, window), src, view)) {
+					done = true;
+					break;
+				}
+			}
+
+			if(done) {
+				break;
 			}
 		}
 	}

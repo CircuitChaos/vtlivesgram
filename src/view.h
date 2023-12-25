@@ -14,7 +14,7 @@ public:
 		EVT_NEXT_FFT_WINDOW = 1 << 2,
 	};
 
-	View();
+	View(double initialSpeed);
 	~View();
 
 	int getFd() const;
@@ -23,24 +23,24 @@ public:
 	double getSpeed() const;
 
 	uint32_t evt();
-	void update(const std::vector<uint16_t> &data, uint32_t rate, uint64_t ts, const std::string &fftWindowName);
+	uint32_t update(const std::vector<uint16_t> &data, uint32_t rate, uint64_t ts, const std::string &fftWindowName);
 
 private:
-	int m_fd;
-	unsigned m_width;
-	unsigned m_height;
+	int m_fd{-1};
+	unsigned m_width{0};
+	unsigned m_height{0};
 	double m_speed;
-	unsigned m_zoom;
-	unsigned m_shift;
-	int m_mousex;
-	uint32_t m_lastRate;
-	uint64_t m_lastTs;
+	unsigned m_zoom{1};
+	unsigned m_shift{0};
+	int m_mousex{-1};
+	uint32_t m_lastRate{0};
+	uint64_t m_lastTs{0};
 	std::vector<uint16_t> m_lastData;
-	std::string m_lastFftWindowName;
+	std::string m_lastFftWindowName{"?"};
 	XResources m_res;
-	unsigned m_signalHeight;
-	unsigned m_waterfallHeight;
-	bool m_freeze;
+	unsigned m_signalHeight{0};
+	unsigned m_waterfallHeight{0};
+	bool m_freeze{false};
 
 	enum Dir {
 		DIR_UP,

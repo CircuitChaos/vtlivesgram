@@ -38,20 +38,8 @@ static int ioErrorHandler(Display *dpy)
 }
 #endif
 
-View::View()
-    : m_fd(-1),
-      m_width(0),
-      m_height(0),
-      m_speed(1.0),
-      m_zoom(1),
-      m_shift(0),
-      m_mousex(-1),
-      m_lastRate(0),
-      m_lastTs(0),
-      m_lastFftWindowName("?"),
-      m_signalHeight(0),
-      m_waterfallHeight(0),
-      m_freeze(false)
+View::View(double initialSpeed)
+    : m_speed(initialSpeed)
 {
 	m_res.dpy = XOpenDisplay(NULL);
 	xassert(m_res.dpy, "Cannot open display");
@@ -265,13 +253,19 @@ uint32_t View::evt()
 	return rs;
 }
 
-void View::update(const std::vector<uint16_t> &data, uint32_t rate, uint64_t ts, const std::string &fftWindowName)
+uint32_t View::update(const std::vector<uint16_t> &data, uint32_t rate, uint64_t ts, const std::string &fftWindowName)
 {
 	if(m_freeze)
-		return;
+		return EVT_NONE;
 
 	if(data.size() != m_width * m_zoom)
-		return;
+		return EVT_NONE;
+
+	bool speedChanged(false);
+	if(m_lastRate != 0 && m_width != 0 && m_speed > getMaxSpeed()) {
+		m_speed      = getMaxSpeed();
+		speedChanged = true;
+	}
 
 	if(m_zoom == 1)
 		m_lastData = data;
@@ -290,6 +284,8 @@ void View::update(const std::vector<uint16_t> &data, uint32_t rate, uint64_t ts,
 	updateWaterfall();
 	updateStatus();
 	redrawAll();
+
+	return speedChanged ? EVT_CONFIG_CHANGED : EVT_NONE;
 }
 
 void View::redrawAll()
