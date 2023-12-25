@@ -48,8 +48,8 @@ void Cli::help()
 	    "  -r <rate>: specify sample rate\n"
 	    "  -w: wait on EOF\n"
 	    "\n"
-	    "If sample rate is specified, then input type is changed \n"
-	    "from vt to raw, mono, s16_le.\n";
+	    "If sample rate is specified, then input type is changed from vt \n"
+	    "to raw, mono, s16_le.";
 
 	puts(helpstr);
 }
