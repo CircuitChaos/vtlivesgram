@@ -1,30 +1,30 @@
 # VT Live Spectrogram
 
-A tool to display live spectrogram data from *vlfrx-tools* output.
+A tool to display live spectrogram data from *vlfrx-tools* and raw (s16_le) streams.
 
 ## Objective
 
 I needed a software to display live spectrogram data on Raspberry Pi 4. The task of finding one 
-proved to be harder than I expected.
+proved harder than I expected.
 
 * There's *baudline*, but it's binary-only and there's no ARM port.
 
-* There's *glfer*, but it's unmaintained, still uses OSS and turned out to be pretty unstable on Raspberry.
+* There's *glfer*, but it's unmaintained, still uses OSS, and turned out to be pretty unstable on Raspberry.
 
-* There's *vtsgram*, which generates nice-looking spectrograms with *sox*, but it's not live.
+* There's *vtsgram* in *vlfrx-tools* software suite, which generates nice-looking spectrograms with *sox*, but it's not live (it can't work on live streams).
 
 * There's *fldigi*, but it's very CPU-intensive.
 
 All other software I found is only for Windows.
 
-My **vtlivesgram** should run on any Linux system (not only Raspberry Pi 4) and might fill this gap.
+My **vtlivesgram** should run on any Linux system (not only Raspberry Pi 4) and fills this gap.
 
 ## Building
 
 ### Dependencies
 
-**vtlivesgram** expects input to be in format produced by vlfrx-tools, so first you need to download 
-and install them: http://abelian.org/vlfrx-tools/.
+If you want to use *vlfrx-tools*, then first you need to download and install them: http://abelian.org/vlfrx-tools/. 
+It's not needed if you intend to use **vtlivesgram** with raw data.
 
 Then, you'll need some programs and libraries (Debian package names):
 
@@ -47,8 +47,8 @@ executable to where you want it).
 
 ### CLI interface
 
-The program expects to read data produced by *vlfrx-tools* on its standard input. To test it, you 
-can issue:
+By default, the program expects to read data produced by *vlfrx-tools* on its standard input. To test it, 
+you can issue:
 
 `vtgen -t -r 48000 -s a=1,f=5000 | vtlivesgram`
 
@@ -56,19 +56,36 @@ It will produce a sine wave at 5 kHz sampled at 48 kHz and feed it to vtlivesgra
 
 To plot data from .wav file, use:
 
-`vtwavex file.wav | vtcat -- -:1 - | vtlivesgram`
+`vtwavex file.wav | vtcat -- -:1 - | vtlivesgram -w`
 
-To plot data sampled by the sound card (with ALSA), use the following command. It will take some time 
-before data starts to appear, as *vtcard* needs to calibrate first:
+*-w* option makes **vtlivesgram** wait on input EOF, instead of exiting, which is useful in this case.
 
-`vtcard -r 48000 | vtcat -- -:1 - | vtlivesgram`
+As an alternative, the program can read raw data, as produced by *sox -t raw* or *arecord -t raw*. It 
+switches to this mode if *-r <rate>* option is specified. So, an equivalent to plot data from .wav file 
+in this mode would be:
+
+`sox file.wav -t raw -e signed -b 16 -c 1 - | vtlivesgram -r 48000 -w`
+
+To plot data sampled by the sound card (with ALSA), use the following command:
+
+`vtcard -r 48000 -u | vtcat -- -:1 - | vtlivesgram`
+
+Or:
+
+`arecord -t raw -f s16_le -c 1 -r 48000 | vtlivesgram -r 48000`
+
+Command-line help can be printed by using:
+
+`vtlivesgram -h`
 
 There are some limitations on the input data format though:
 
-* Only single-channel data is supported
-* Only float8 (double) sample format is supported
-* Timestamps in input data must be absolute, not relative
-* Sample rate cannot change mid-stream
+* VT and raw: only single-channel data is supported
+* VT: only float8 (double) sample format is supported
+* raw: only s16_le (signed 16-bit integer) sample format is supported
+* VT: timestamps in input data must be absolute, not relative
+* raw: timestamps are not supported
+* VT: sample rate cannot change mid-stream (VT format supports this feature)
 
 These limitations aren't inherent and can be dealt with if there's a need for it – I just didn't see the 
 need, so I didn't code it.

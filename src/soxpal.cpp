@@ -3,9 +3,10 @@
 
 // 400 pixels from 0 to -120 dBFS, RGB
 
-static const unsigned PAL_SIZE		= 400;
-static const unsigned MAX_DBFS		= 12000;
+static const unsigned PAL_SIZE = 400;
+static const unsigned MAX_DBFS = 12000;
 
+// clang-format off
 static const uint8_t palette[] =
 {
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFA, 0xFF, 0xFF,
@@ -159,12 +160,13 @@ static const uint8_t palette[] =
 	0x0B, 0x00, 0x00, 0x08, 0x00, 0x00, 0x05, 0x00,
 	0x00, 0x05, 0x00, 0x00, 0x03, 0x00, 0x00, 0x03,
 };
+// clang-format on
 
 void soxpal::dbfsToRgb(uint8_t bgr[], uint16_t dbfs)
 {
 	// calculate palette offset
 	unsigned offset((uint32_t) dbfs * (PAL_SIZE - 1) / MAX_DBFS);
-	if (offset > (PAL_SIZE - 1))
+	if(offset > (PAL_SIZE - 1))
 		offset = PAL_SIZE - 1;
 
 	bgr[0] = palette[offset * 3 + 2];

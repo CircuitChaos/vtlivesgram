@@ -14,7 +14,7 @@ void doThrow(const char *file, int line, const char *fmt, ...)
 	va_start(ap, fmt);
 
 	char *p;
-	if (vasprintf(&p, fmt, ap) == -1)
+	if(vasprintf(&p, fmt, ap) == -1)
 		throw std::runtime_error("Allocation error during exception throwing");
 
 	va_end(ap);

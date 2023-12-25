@@ -1,10 +1,11 @@
 #include "font.h"
 
-static const unsigned PBM_WIDTH		= 288;
-static const unsigned PBM_HEIGHT	= 128;
-static const unsigned PBM_CHARS_X	= PBM_WIDTH / font::CHAR_WIDTH;
-static const unsigned PBM_CHARS_Y	= PBM_HEIGHT / font::CHAR_HEIGHT;
+static const unsigned PBM_WIDTH   = 288;
+static const unsigned PBM_HEIGHT  = 128;
+static const unsigned PBM_CHARS_X = PBM_WIDTH / font::CHAR_WIDTH;
+static const unsigned PBM_CHARS_Y = PBM_HEIGHT / font::CHAR_HEIGHT;
 
+// clang-format off
 static const uint8_t fontPbm[] =
 {
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -584,14 +585,14 @@ static const uint8_t fontPbm[] =
 	0xFF, 0xFF, 0xFE, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF,
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 };
+// clang-format on
 
 void font::getLine(char *line, char ch, int lineNo)
 {
 	const unsigned y(((unsigned) ch / PBM_CHARS_X) * font::CHAR_HEIGHT + lineNo);
 	const unsigned x(((unsigned) ch % PBM_CHARS_X) * font::CHAR_WIDTH);
 
-	for (unsigned i(0); i < font::CHAR_WIDTH; ++i)
-	{
+	for(unsigned i(0); i < font::CHAR_WIDTH; ++i) {
 		const unsigned offset((y * PBM_WIDTH + x + i) / 8);
 		const unsigned shift((x + i) % 8);
 		line[i] = (fontPbm[offset] & (1 << (7 - shift))) ? 0 : 0xff;

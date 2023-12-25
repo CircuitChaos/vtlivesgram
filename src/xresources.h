@@ -8,16 +8,14 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-struct SXResources
-{
-	SXResources();
-	~SXResources();
+struct XResources {
+	~XResources();
 
-	Display *dpy;
+	Display *dpy{NULL};
 	boost::optional<Window> win;
 	boost::optional<Atom> winDelMsg;
 	XVisualInfo vi;
 
-	XImage *mainImage;
-	XImage *statusImage;
+	XImage *mainImage{NULL};
+	XImage *statusImage{NULL};
 };

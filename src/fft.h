@@ -4,11 +4,9 @@
 #include <inttypes.h>
 #include <fftw3.h>
 
-class CFft
-{
+class Fft {
 public:
-	CFft();
-	~CFft();
+	~Fft();
 
 	void nextWindow();
 	const char *getWindowName() const;
@@ -18,8 +16,7 @@ public:
 	void operator()(std::vector<uint16_t> &out, const std::vector<double> &in);
 
 private:
-	enum EWindowType
-	{
+	enum WindowType {
 		WIN_HANNING,
 		WIN_RECT,
 		WIN_COSINE,
@@ -31,8 +28,8 @@ private:
 		WIN_MAX,
 	};
 
-	EWindowType m_windowType;
-	unsigned m_width;
+	WindowType m_windowType{WIN_NUTTALL};
+	unsigned m_width{0};
 	double *m_window;
 	double *m_input;
 	fftw_complex *m_output;

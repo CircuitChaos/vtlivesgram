@@ -4,34 +4,36 @@ If you want to contribute to the code, here's the overall program structure whic
 
 # Entry point and main loop
 
-Program entry point is in *main.cpp*. It creates an instance of two classes: CView (user interface) and 
-CSource (for providing magnitudes to be presented by the user interface) and starts a select()-based loop 
+Program entry point is in *main.cpp*. It creates an instance of two classes: View (user interface) and 
+Source (for providing magnitudes to be presented by the user interface) and starts a select()-based loop 
 to watch for readability on two file descriptors: X server connection (xfd) and stdin (sfd).
 
-If X server connection is readable, then CView::evt() is called to read and process all X server events. 
+If X server connection is readable, then View::evt() is called to read and process all X server events. 
 It returns a bit mask with user interface events, which can contain one or more of the following flags:
 
-* CView::EVT_TERMINATE – window has been closed, program has to terminate
-* CView::EVT_CONFIG_CHANGED – window width or speed been changed, need to pass new params to the CSource instance
-* CView::EVT_NEXT_FFT_WINDOW – next FFT window has been requested, need to pass it to the CSource instance
+* View::EVT_TERMINATE – window has been closed, program has to terminate
+* View::EVT_CONFIG_CHANGED – window width or speed been changed, need to pass new params to the Source instance
+* View::EVT_NEXT_FFT_WINDOW – next FFT window has been requested, need to pass it to the Source instance
 
-If standard input is readable, then CSource::read() is called, which can yield three results:
+If standard input is readable, then Source::read() is called, which can yield three results:
 
-* End-of-file on input (method returns false) – program has to terminate
+* End-of-file on input (method returns false) – program has to terminate (if -w is not specified) or just 
+stop reading input (if -w is specified)
 * No result (empty output vector) – it means that more input data is needed and nothing is done
-* One or more rows for the user interface – they are passed to the CView instance along with the input sample 
-rate, last timestamp and current FFT window name
+* One or more rows for the user interface – they are passed to the View instance along with the input sample 
+rate, last timestamp, and current FFT window name
 
-# Data source (CSource)
+# Data source (Source)
 
-The most important method is CSource::read(). It reads a block of data from the standard input, feeds it to 
-the instance of CVtParser class, which parses it and returns raw samples and metadata (sample rate and 
-timestamp), and then – as long as the number of samples accumulated is enough (at least sample rate divided 
-by the speed) – calls operator() from the CFft instance to produce output magnitudes.
+The most important method is Source::read(). It reads a block of data from the standard input, feeds it to 
+the instance of a class derived from InputParser (VtParser or RawParser) class, which parses it and returns 
+raw samples and metadata (sample rate and timestamp), and then – as long as the number of samples accumulated 
+is enough (at least sample rate divided by the speed) – calls operator() from the Fft instance to produce 
+output magnitudes.
 
-# User interface (CView)
+# User interface (View)
 
-This class is responsible for displaying data provided by CSource and for interacting with the user. In its 
+This class is responsible for displaying data provided by Source and for interacting with the user. In its 
 constructor, a connection to the X server is initialized and the program window is created. It also sets the 
 window name, creates an atom to be read when the window manager closes the window, configures window event 
 masks, reads the initial window size and initializes images, as for efficiency everything is drawn on images 
@@ -41,7 +43,7 @@ There are two images – main image and status bar image – because status bar 
 frequently than the main image (when the mouse is moved over the window and current frequency and magnitude 
 on the status bar needs to be updated).
 
-After the constructor, everything is done in the main event method – CView::evt(). This method reacts to 
+After the constructor, everything is done in the main event method – View::evt(). This method reacts to 
 the following X events:
 
 * MotionNotify (mouse has been moved)
@@ -52,23 +54,28 @@ the following X events:
 * MapNotify (window has been mapped)
 * ClientMessage (window has been closed by the window manager)
 
-There are many private methods in the CView class, but I believe they're more or less self-explanatory.
+There are many private methods in the View class, but I believe they're more or less self-explanatory.
 
 # Other classes
 
 There are other classes which are used by two main classes mentioned above.
 
-## CVtParser
+## VtParser
 
-Parses input in vlfrx-tools format, performs checks and outputs metadata (sample rate and timestamp) and 
-raw samples.
+Derived from InputParser, parses input in vlfrx-tools format, performs checks and outputs metadata (sample rate and timestamp) and 
+samples.
 
-## CFft
+## RawParser
+
+Derived from InputParser, parses input in raw format and outputs samples (as doubles), and metadata. Timestamps are not supported, 
+and sample rate is fixed to the one provided in the constructor.
+
+## Fft
 
 This is the core part of the program. It uses *libfftw* to perform FFT calculations. Its main 
-method is CFft::operator(). When called, it checks the output width and calculates FFT width 
+method is Fft::operator(). When called, it checks the output width and calculates FFT width 
 from it (multiplies it by two), as the output contains only relevant number of frequency bins (half 
-of the FFT width). If the FFT width has been changed (or it's the first call), it calls CFft::init() 
+of the FFT width). If the FFT width has been changed (or it's the first call), it calls Fft::init() 
 to reinitialize input and output buffers, recreate FFT window and FFTW plan. Then it creates a vector 
 to store magnitudes, splits input samples into a number of blocks, each containing a number of samples 
 equal to the FFT width, applies a FFT window on them and performs one or more FFT operations, calling 
@@ -83,18 +90,20 @@ logarithms on them (20 * log10(magnitude / (width * iterations)). Then the resul
 value is clipped to the safe range (0.0 – -650.0), converted to the fixed-point return value and put 
 in the output buffer.
 
-CFft also has nextWindow() and getWindowName() methods for handling different FFT windows. All supported 
+Fft also has nextWindow() and getWindowName() methods for handling different FFT windows. All supported 
 window types are implemented in the private windowFunction() method.
 
-## CSoxPal
+## SoxPal
 
 Converts magnitude in dBFS (from 0 to -120) to RGB values of colors used by spectrogram generated by 
 *sox*, as I like its palette.
 
-## CFont
+## Font
 
-Stores a DOS font which is used by CView to draw characters on the status bar.
+Stores a DOS font which is used by View to draw characters on the status bar.
 
-## SXResources
+## XResources
 
-This is a structure, not a class, although it contains a constructor and destructor. It contains all X resources used by CView. It has been separated, because CView's constructor does many things and if it fails and throws an exception, the resources wouldn't be freed by the program (although it wouldn't be a big deal, because the program would exit anyway).
+This structure (not a class) contains all X resources used by View. It has been separated, because View's 
+constructor does many things and if it fails and throws an exception, the resources wouldn't be freed by 
+the program (although it wouldn't be a big deal, because the program would exit anyway).

@@ -6,32 +6,36 @@
 #include "source.h"
 #include "view.h"
 #include "throw.h"
+#include "cli.h"
 
-static int main2(int argc, char * const /* argv */ [])
+static int main2(int argc, char *const argv[])
 {
-	if (argc >= 2)
-	{
-		printf("Syntax: vtcat ... | vtlivesgram\n");
+	Cli cli(argc, argv);
+	if(cli.shouldExit()) {
 		return EXIT_SUCCESS;
 	}
 
-	CView view;
-	CSource src(view.getWidth(), view.getSpeed());
+	View view;
+	Source src(view.getWidth(), view.getSpeed(), cli.getSampleRate());
 
 	const int xfd(view.getFd());
 	const int sfd(src.getFd());
-	const int nfd(((xfd > sfd) ? xfd : sfd) + 1);
+	int nfd(((xfd > sfd) ? xfd : sfd) + 1);
+	bool inputEof(false);
 
-	for (;;)
-	{
+	for(;;) {
 		fd_set rfd;
 		FD_ZERO(&rfd);
 		FD_SET(xfd, &rfd);
-		FD_SET(sfd, &rfd);
+
+		if(!inputEof) {
+			FD_SET(sfd, &rfd);
+		}
 
 		const int rs(select(nfd, &rfd, NULL, NULL, NULL));
-		if (rs == -1 && errno == EINTR)
+		if(rs == -1 && errno == EINTR) {
 			continue;
+		}
 
 		xassert(rs >= 0, "select(): %m");
 		xassert(rs > 0, "select(): returned zero");
@@ -43,44 +47,50 @@ static int main2(int argc, char * const /* argv */ [])
 		// (in view.evt()) anyway, so it won't hang.
 		const uint32_t e(view.evt());
 
-		if (e & CView::EVT_TERMINATE)
+		if(e & View::EVT_TERMINATE) {
 			break;
+		}
 
-		if (e & CView::EVT_CONFIG_CHANGED)
-		{
+		if(e & View::EVT_CONFIG_CHANGED) {
 			src.setWidth(view.getWidth());
 			src.setSpeed(view.getSpeed());
 		}
 
-		if (e & CView::EVT_NEXT_FFT_WINDOW)
+		if(e & View::EVT_NEXT_FFT_WINDOW) {
 			src.nextWindow();
+		}
 
-		if (FD_ISSET(sfd, &rfd))
-		{
-			std::vector<std::vector<uint16_t> > data;
+		if(!inputEof && FD_ISSET(sfd, &rfd)) {
+			std::vector<std::vector<uint16_t>> data;
 			uint32_t rate;
 			uint64_t ts;
 			std::string window;
 
-			if (!src.read(data, rate, ts, window))
-				break;
+			if(!src.read(data, rate, ts, window)) {
+				if(cli.getWaitOnEof()) {
+					inputEof = true;
+					nfd      = xfd + 1;
+				}
+				else {
+					break;
+				}
+			}
 
-			for (std::vector<std::vector<uint16_t> >::const_iterator i(data.begin()); i != data.end(); ++i)
+			for(std::vector<std::vector<uint16_t>>::const_iterator i(data.begin()); i != data.end(); ++i) {
 				view.update(*i, rate, ts, window);
+			}
 		}
 	}
 
 	return EXIT_SUCCESS;
 }
 
-int main(int argc, char * const argv[])
+int main(int argc, char *const argv[])
 {
-	try
-	{
+	try {
 		return main2(argc, argv);
 	}
-	catch (const std::runtime_error &e)
-	{
+	catch(const std::runtime_error &e) {
 		fprintf(stderr, "Fatal error: %s\n", e.what());
 		return EXIT_FAILURE;
 	}

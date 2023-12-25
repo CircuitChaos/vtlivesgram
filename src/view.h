@@ -4,20 +4,18 @@
 #include <inttypes.h>
 #include "xresources.h"
 
-class CView
-{
+class View {
 public:
-	enum EEvt
-	{
-		EVT_NONE		= 0,
+	enum Evt {
+		EVT_NONE = 0,
 
-		EVT_TERMINATE		= 1 << 0,
-		EVT_CONFIG_CHANGED	= 1 << 1,
-		EVT_NEXT_FFT_WINDOW	= 1 << 2,
+		EVT_TERMINATE       = 1 << 0,
+		EVT_CONFIG_CHANGED  = 1 << 1,
+		EVT_NEXT_FFT_WINDOW = 1 << 2,
 	};
 
-	CView();
-	~CView();
+	View();
+	~View();
 
 	int getFd() const;
 
@@ -39,13 +37,12 @@ private:
 	uint64_t m_lastTs;
 	std::vector<uint16_t> m_lastData;
 	std::string m_lastFftWindowName;
-	SXResources m_res;
+	XResources m_res;
 	unsigned m_signalHeight;
 	unsigned m_waterfallHeight;
 	bool m_freeze;
 
-	enum EDir
-	{
+	enum Dir {
 		DIR_UP,
 		DIR_DN,
 		DIR_RESET,
@@ -55,7 +52,7 @@ private:
 	void redrawAll();
 	void resetImages();
 	void updateMouse(unsigned x, unsigned y);
-	bool updateSpeed(EDir dir);
+	bool updateSpeed(Dir dir);
 	void updateStatus();
 	void drawStatusChar(unsigned x, char ch);
 	void clearSignal();
@@ -73,5 +70,5 @@ private:
 	bool updateZoom(bool up);
 	void updateShift(bool up);
 	bool resetZoomAndShift();
-	unsigned getMaxShift();	// returns max shift for current zoom and window size
+	unsigned getMaxShift(); // returns max shift for current zoom and window size
 };

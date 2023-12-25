@@ -1,25 +1,18 @@
 #include "xresources.h"
 
-SXResources::SXResources():
-	dpy(NULL),
-	mainImage(NULL),
-	statusImage(NULL)
+XResources::~XResources()
 {
-}
-
-SXResources::~SXResources()
-{
-	if (statusImage)
+	if(statusImage)
 		XDestroyImage(statusImage);
 
-	if (mainImage)
+	if(mainImage)
 		XDestroyImage(mainImage);
 
 	// should we also free winDelMsg (Atom) here?
 
-	if (win)
+	if(win)
 		XDestroyWindow(dpy, win.get());
 
-	if (dpy)
+	if(dpy)
 		XCloseDisplay(dpy);
 }
